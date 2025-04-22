@@ -76,6 +76,8 @@ class P2PFileShareApp(QMainWindow):
         file_ops_layout.addWidget(self.upload_btn)
 
         self.download_btn  = QPushButton("Download File")
+        self.download_btn.clicked.connect(self.download_file)
+        file_ops_layout.addWidget(self.download_btn)
 
         
         self.share_btn = QPushButton("Share File")
@@ -128,6 +130,30 @@ class P2PFileShareApp(QMainWindow):
         if file_name:
             self.selected_file_edit.setText(file_name)
             self.status_bar.showMessage(f"File selected: {file_name}")
+
+    def download_file(self):
+        if not self.files_list.currentItem():
+            self.status_bar.showMessage("Please select a file to download")
+            return
+        
+        file_name = self.files_list.currentItem().text()
+        save_path, _  = QFileDialog.getSaveFileName(self, "Save File", file_name, "All Files (*)")
+
+        if save_path:
+            self.progress_bar.setVisible(True)
+            self.progress_bar.setValue(0)
+
+        import time
+        for i in range(101):
+            self.progress_bar.setValue(i)
+            QApplication.processEvents() 
+            time.sleep(0.01)
+
+        self.status_bar.showMessage(f"Downloading {file_name}...")
+        self.progress_bar.setVisible(False)
+
+        time = QDateTime.currentDateTime().toString("hh:mm:ss")
+        self.chat_display.append(f"[{time}] You: Downloading file '{file_name}'")   
     
     def upload_file(self):
         if not self.selected_file_edit.text():
@@ -141,7 +167,7 @@ class P2PFileShareApp(QMainWindow):
         for i in range(101):
             self.progress_bar.setValue(i)
             QApplication.processEvents() 
-            time.sleep(0.11) 
+            time.sleep(0.01) 
         
         file_name = self.selected_file_edit.text().split('/')[-1]
         self.files_list.addItem(file_name)
@@ -194,3 +220,4 @@ if __name__ == "__main__":
     window.show()
     
     sys.exit(app.exec_())
+
