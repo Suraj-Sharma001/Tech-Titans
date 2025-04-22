@@ -4,6 +4,8 @@ from PyQt5.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout, QH
                              QGroupBox, QFileDialog, QStatusBar, QProgressBar)
 from PyQt5.QtCore import Qt, QDateTime
 
+# from Chat.server import server
+# from Chat.client import client
 class P2PFileShareApp(QMainWindow):
     def __init__(self):
         super().__init__()
