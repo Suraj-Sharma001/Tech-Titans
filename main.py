@@ -3,15 +3,18 @@ from PyQt5.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout, QH
                              QSplitter, QLabel, QLineEdit, QPushButton, QTextEdit, QListWidget,
                              QGroupBox, QFileDialog, QStatusBar, QProgressBar)
 from PyQt5.QtCore import Qt, QDateTime
+from PyQt5.QtGui import QIcon, QFont
 
 # from Chat.server import server
 # from Chat.client import client
+
+
 class P2PFileShareApp(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("P2P File Sharing System")
-        self.resize(900, 600)
-        self.setMinimumSize(800, 500)
+        self.setGeometry(0, 0, 900, 600)
+        self.setWindowIcon(QIcon("logo.jpg"))
         
         central_widget = QWidget()
         self.setCentralWidget(central_widget)
@@ -53,7 +56,6 @@ class P2PFileShareApp(QMainWindow):
         file_group = QGroupBox("P2P File Operations: ")
         layout = QVBoxLayout()
         
-        # Selected file area
         file_selection_layout = QHBoxLayout()
         file_selection_layout.addWidget(QLabel("Selected File:"))
         
@@ -167,8 +169,8 @@ class P2PFileShareApp(QMainWindow):
     def send_message(self):
         message = self.message_input.text().strip()
         if message:
-            timestamp = QDateTime.currentDateTime().toString("hh:mm:ss")
-            self.chat_display.append(f"[{timestamp}] You: {message}")
+            timeing = QDateTime.currentDateTime().toString("hh:mm:ss")
+            self.chat_display.append(f"[{timeing}] You: {message}")
             self.message_input.clear()
             
             # message sending
@@ -177,12 +179,18 @@ class P2PFileShareApp(QMainWindow):
             import time
             QApplication.processEvents()
             time.sleep(1)
-            self.chat_display.append(f"[{timestamp}] Peer: I received your message!")
+            self.chat_display.append(f"[{timeing}] Peer: I received your message!")
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
+
+    def style(file_name):
+        with open(file_name, "r") as file:
+            return file.read()
+        
+    app.setStyleSheet(style("style.qss"))
     
-    open = P2PFileShareApp()
-    open.show()
+    window = P2PFileShareApp()
+    window.show()
     
     sys.exit(app.exec_())
