@@ -1,11 +1,12 @@
 import sys
+import socket
+import threading
 from PyQt5.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, 
                              QSplitter, QLabel, QLineEdit, QPushButton, QTextEdit, QListWidget,
                              QGroupBox, QFileDialog, QStatusBar, QProgressBar)
 from PyQt5.QtCore import Qt, QDateTime
+from PyQt5.QtGui import QFont
 
-# from Chat.server import server
-# from Chat.client import client
 class P2PFileShareApp(QMainWindow):
     def __init__(self):
         super().__init__()
@@ -17,11 +18,9 @@ class P2PFileShareApp(QMainWindow):
         self.setCentralWidget(central_widget)
         main_layout = QVBoxLayout(central_widget)
         
-
         splitter = QSplitter(Qt.Horizontal)
         main_layout.addWidget(splitter)
         
-
         file_widget = QWidget()
         splitter.addWidget(file_widget)
         file_layout = QVBoxLayout(file_widget)
@@ -42,18 +41,31 @@ class P2PFileShareApp(QMainWindow):
         self.setStatusBar(self.status_bar)
         self.status_bar.showMessage("Ready")
         
-        
         self.progress_bar = QProgressBar()
         self.progress_bar.setMaximumWidth(200)
         self.progress_bar.setMaximumHeight(16)
         self.progress_bar.setVisible(False)
         self.status_bar.addPermanentWidget(self.progress_bar)
         
+        self.HEADER = 64
+        self.PORT = 5050
+        self.FORMAT = 'utf-8'
+        self.DISCONNECT_MESSAGE = "DISCONNECT"
+        self.SERVER = socket.gethostbyname(socket.gethostname())
+        self.ADDR = (self.SERVER, self.PORT)
+
+        self.client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        try:
+            self.client.connect(self.ADDR)
+            self.status_bar.showMessage("Connected to chat server")
+            threading.Thread(target=self.receive_messages, daemon=True).start()
+        except Exception as e:
+            self.status_bar.showMessage(f"Connection failed: {e}")
+        
     def create_file_section(self):
         file_group = QGroupBox("P2P File Operations: ")
         layout = QVBoxLayout()
         
-        # Selected file area
         file_selection_layout = QHBoxLayout()
         file_selection_layout.addWidget(QLabel("Selected File:"))
         
@@ -72,9 +84,6 @@ class P2PFileShareApp(QMainWindow):
         self.upload_btn = QPushButton("Upload File")
         self.upload_btn.clicked.connect(self.upload_file)
         file_ops_layout.addWidget(self.upload_btn)
-
-        self.download_btn  = QPushButton("Download File")
-
         
         self.share_btn = QPushButton("Share File")
         self.share_btn.clicked.connect(self.share_file)
@@ -88,23 +97,27 @@ class P2PFileShareApp(QMainWindow):
         self.files_list.itemDoubleClicked.connect(self.file_selected)
         layout.addWidget(self.files_list)
         
-        # here file will listed
+        transfer_layout = QHBoxLayout()
+        transfer_layout.addWidget(QLabel("Transfer Status:"))
+        self.transfer_status = QLabel("No active transfer")
+        transfer_layout.addWidget(self.transfer_status)
+        layout.addLayout(transfer_layout)
         
         file_group.setLayout(layout)
         return file_group
         
     def create_chat_section(self):
-        chat_group = QGroupBox("Chat Section: ")
+        chat_group = QGroupBox("Chat")
         layout = QVBoxLayout()
         
         self.chat_display = QTextEdit()
         self.chat_display.setReadOnly(True)
         layout.addWidget(self.chat_display)
-    
+        
         message_layout = QHBoxLayout()
         
         self.message_input = QLineEdit()
-        self.message_input.setPlaceholderText("Enter your message..")
+        self.message_input.setPlaceholderText("Type your message here...")
         self.message_input.returnPressed.connect(self.send_message)
         message_layout.addWidget(self.message_input)
         
@@ -114,9 +127,9 @@ class P2PFileShareApp(QMainWindow):
         
         layout.addLayout(message_layout)
         
-        other_party_layout = QHBoxLayout()
-        other_party_layout.addStretch()
-        layout.addLayout(other_party_layout)
+        peer_layout = QHBoxLayout()
+        peer_layout.addStretch()
+        layout.addLayout(peer_layout)
         
         chat_group.setLayout(layout)
         return chat_group
@@ -138,8 +151,8 @@ class P2PFileShareApp(QMainWindow):
         import time
         for i in range(101):
             self.progress_bar.setValue(i)
-            QApplication.processEvents() 
-            time.sleep(0.11) 
+            QApplication.processEvents()
+            time.sleep(0.02)
         
         file_name = self.selected_file_edit.text().split('/')[-1]
         self.files_list.addItem(file_name)
@@ -157,7 +170,6 @@ class P2PFileShareApp(QMainWindow):
         file_name = self.selected_file_edit.text().split('/')[-1]
         
         self.status_bar.showMessage(f"File shared: {file_name}")
-        
         timestamp = QDateTime.currentDateTime().toString("hh:mm:ss")
         self.chat_display.append(f"[{timestamp}] You: Shared file '{file_name}' with the network")
     
@@ -167,22 +179,38 @@ class P2PFileShareApp(QMainWindow):
     def send_message(self):
         message = self.message_input.text().strip()
         if message:
+            self.send_to_server(message)
             timestamp = QDateTime.currentDateTime().toString("hh:mm:ss")
             self.chat_display.append(f"[{timestamp}] You: {message}")
             self.message_input.clear()
-            
-            # message sending
-
-
-            import time
-            QApplication.processEvents()
-            time.sleep(1)
-            self.chat_display.append(f"[{timestamp}] Peer: I received your message!")
+    
+    def send_to_server(self, msg):
+        try:
+            message = msg.encode(self.FORMAT)
+            msg_length = len(message)
+            send_length = str(msg_length).encode(self.FORMAT)
+            send_length += b' ' * (self.HEADER - len(send_length))
+            self.client.send(send_length)
+            self.client.send(message)
+        except Exception as e:
+            self.chat_display.append(f"[ERROR] Could not send message: {e}")
+    
+    def receive_messages(self):
+        while True:
+            try:
+                msg = self.client.recv(2048).decode(self.FORMAT)
+                if msg:
+                    timestamp = QDateTime.currentDateTime().toString("hh:mm:ss")
+                    self.chat_display.append(f"[{timestamp}] Peer: {msg}")
+            except:
+                self.chat_display.append("[ERROR] Connection lost.")
+                break
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
+    app.setStyle("Fusion")
     
-    open = P2PFileShareApp()
-    open.show()
+    window = P2PFileShareApp()
+    window.show()
     
     sys.exit(app.exec_())
