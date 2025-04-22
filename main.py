@@ -191,4 +191,3 @@ if __name__ == "__main__":
     open.show()
     
     sys.exit(app.exec_())
-    
