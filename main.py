@@ -13,36 +13,31 @@ class P2PFileShareApp(QMainWindow):
         self.resize(900, 600)
         self.setMinimumSize(800, 500)
         
-        # Central widget
         central_widget = QWidget()
         self.setCentralWidget(central_widget)
         main_layout = QVBoxLayout(central_widget)
         
-        # do section m divide -> chat aur file section
+
         splitter = QSplitter(Qt.Horizontal)
         main_layout.addWidget(splitter)
         
-        # File operations section
+
         file_widget = QWidget()
         splitter.addWidget(file_widget)
         file_layout = QVBoxLayout(file_widget)
         
-        # Create file section 
         file_section = self.create_file_section()
         file_layout.addWidget(file_section)
         
-        # Chat section
         chat_widget = QWidget()
         splitter.addWidget(chat_widget)
         chat_layout = QVBoxLayout(chat_widget)
         
-        # Create chat section 
         chat_section = self.create_chat_section()
         chat_layout.addWidget(chat_section)
         
         splitter.setSizes([450, 450])
         
-        # bottom status 1-100% bar
         self.status_bar = QStatusBar()
         self.setStatusBar(self.status_bar)
         self.status_bar.showMessage("Ready")
