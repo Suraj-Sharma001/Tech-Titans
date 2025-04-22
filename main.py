@@ -3,7 +3,6 @@ from PyQt5.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout, QH
                              QSplitter, QLabel, QLineEdit, QPushButton, QTextEdit, QListWidget,
                              QGroupBox, QFileDialog, QStatusBar, QProgressBar)
 from PyQt5.QtCore import Qt, QDateTime
-from PyQt5.QtGui import QFont
 
 class P2PFileShareApp(QMainWindow):
     def __init__(self):
@@ -76,10 +75,9 @@ class P2PFileShareApp(QMainWindow):
         self.upload_btn = QPushButton("Upload File")
         self.upload_btn.clicked.connect(self.upload_file)
         file_ops_layout.addWidget(self.upload_btn)
-        
-        # self.download_btn = QPushButton("Download File")
-        # self.download_btn.clicked.connect(self.download_file)
-        # file_ops_layout.addWidget(self.download_btn)
+
+        self.download_btn  = QPushButton("Download File")
+
         
         self.share_btn = QPushButton("Share File")
         self.share_btn.clicked.connect(self.share_file)
@@ -87,39 +85,29 @@ class P2PFileShareApp(QMainWindow):
         
         layout.addLayout(file_ops_layout)
         
-        # Available files list
         layout.addWidget(QLabel("Available Shared Files:"))
         
         self.files_list = QListWidget()
         self.files_list.itemDoubleClicked.connect(self.file_selected)
         layout.addWidget(self.files_list)
         
-        # Add some dummy files for demonstration
         # here file will listed
-
-        transfer_layout = QHBoxLayout()
-        transfer_layout.addWidget(QLabel("Transfer Status:"))
-        self.transfer_status = QLabel("No active transfer")
-        transfer_layout.addWidget(self.transfer_status)
-        layout.addLayout(transfer_layout)
         
         file_group.setLayout(layout)
         return file_group
         
     def create_chat_section(self):
-        chat_group = QGroupBox("Chat")
+        chat_group = QGroupBox("Chat Section: ")
         layout = QVBoxLayout()
         
-        # Chat display area
         self.chat_display = QTextEdit()
         self.chat_display.setReadOnly(True)
         layout.addWidget(self.chat_display)
-        
-        # Message input area
+    
         message_layout = QHBoxLayout()
         
         self.message_input = QLineEdit()
-        self.message_input.setPlaceholderText("Type your message here...")
+        self.message_input.setPlaceholderText("Enter your message..")
         self.message_input.returnPressed.connect(self.send_message)
         message_layout.addWidget(self.message_input)
         
@@ -129,10 +117,9 @@ class P2PFileShareApp(QMainWindow):
         
         layout.addLayout(message_layout)
         
-        # Connected peers
-        peer_layout = QHBoxLayout()
-        peer_layout.addStretch()
-        layout.addLayout(peer_layout)
+        other_party_layout = QHBoxLayout()
+        other_party_layout.addStretch()
+        layout.addLayout(other_party_layout)
         
         chat_group.setLayout(layout)
         return chat_group
@@ -151,48 +138,19 @@ class P2PFileShareApp(QMainWindow):
         self.progress_bar.setVisible(True)
         self.progress_bar.setValue(0)
         
-        # real time while uploading file
         import time
         for i in range(101):
             self.progress_bar.setValue(i)
             QApplication.processEvents() 
-            time.sleep(0.02) 
+            time.sleep(0.11) 
         
         file_name = self.selected_file_edit.text().split('/')[-1]
         self.files_list.addItem(file_name)
         self.status_bar.showMessage(f"File uploaded: {file_name}")
         self.progress_bar.setVisible(False)
         
-        # Add message to chat
         timestamp = QDateTime.currentDateTime().toString("hh:mm:ss")
         self.chat_display.append(f"[{timestamp}] You: Uploaded file '{file_name}'")
-    
-    # def download_file(self):
-    #     if not self.files_list.currentItem():
-    #         self.status_bar.showMessage("No file selected for download")
-    #         return
-            
-    #     file_name = self.files_list.currentItem().text()
-    #     save_path, _ = QFileDialog.getSaveFileName(self, "Save File", file_name, "All Files (*)")
-        
-    #     if save_path:
-    #         # Simulating download process
-    #         self.progress_bar.setVisible(True)
-    #         self.progress_bar.setValue(0)
-            
-    #         # In a real app, you would use QThread for this operation
-    #         import time
-    #         for i in range(101):
-    #             self.progress_bar.setValue(i)
-    #             QApplication.processEvents()  # Keep UI responsive
-    #             time.sleep(0.02)  # Simulate network delay
-            
-    #         self.status_bar.showMessage(f"File downloaded: {file_name}")
-    #         self.progress_bar.setVisible(False)
-            
-    #         # Add message to chat
-    #         timestamp = QDateTime.currentDateTime().toString("hh:mm:ss")
-    #         self.chat_display.append(f"[{timestamp}] You: Downloaded file '{file_name}'")
     
     def share_file(self):
         if not self.selected_file_edit.text():
@@ -203,7 +161,6 @@ class P2PFileShareApp(QMainWindow):
         
         self.status_bar.showMessage(f"File shared: {file_name}")
         
-        # Add message to chatting section
         timestamp = QDateTime.currentDateTime().toString("hh:mm:ss")
         self.chat_display.append(f"[{timestamp}] You: Shared file '{file_name}' with the network")
     
@@ -217,19 +174,19 @@ class P2PFileShareApp(QMainWindow):
             self.chat_display.append(f"[{timestamp}] You: {message}")
             self.message_input.clear()
             
-            # In a real app, this would send the message to peers
-            # Simulate receiving a response
+            # message sending
+
+
             import time
             QApplication.processEvents()
             time.sleep(1)
-            # hardcoded message -> real message will be received from peer
             self.chat_display.append(f"[{timestamp}] Peer: I received your message!")
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
-    app.setStyle("Fusion")  # Modern look across platforms
     
-    window = P2PFileShareApp()
-    window.show()
+    open = P2PFileShareApp()
+    open.show()
     
     sys.exit(app.exec_())
+    
